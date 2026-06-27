@@ -804,13 +804,14 @@ export default function App() {
         </div>
 
         {/* Viewing Section Selector & Live update status (Sleek Theme pattern) */}
+{/* Viewing Section Selector & Live update status (Sleek Theme pattern) */}
         <div className="flex items-center gap-2 sm:gap-3 print:hidden">
-          <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-2.5 py-1.5 border border-slate-200 dark:border-slate-700">
-            <label htmlFor="sectionSelect" className="text-[9px] font-bold text-slate-500 dark:text-slate-450 uppercase tracking-wider mr-1.5">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-2.5 py-1.5 border border-slate-200 dark:border-slate-700">
+            <label htmlFor="sectionSelect" className="hidden sm:block text-[9px] font-bold text-slate-500 dark:text-slate-450 uppercase tracking-wider mr-1.5">
               Section:
             </label>
             <select 
-              id="sectionSelect" 
+              id="sectionSelect"
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
               className="bg-transparent border-none text-xs font-semibold focus:outline-hidden cursor-pointer py-0 text-slate-800 dark:text-slate-200"
@@ -1011,7 +1012,7 @@ export default function App() {
         </aside>
 
         {/* TIMETABLE CONTENT VIEWPORT */}
-        <section className="flex-1 bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden p-3.5 sm:p-6 gap-4 sm:gap-6 print:p-0 print:overflow-visible print:block">
+          <section className="flex-1 bg-slate-50 dark:bg-slate-950 flex flex-col overflow-y-auto p-3.5 sm:p-6 gap-4 sm:gap-6 print:p-0 print:overflow-visible print:block">
           
           {/* Success/Error Alerts inside viewports */}
           {error && (
@@ -1032,8 +1033,7 @@ export default function App() {
           )}
 
           {/* Master Filters and View Mode Controls Row */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-2xs print:hidden">
-            
+            <div className="shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-2xs print:hidden">
             {/* Search & Tabs control */}
             <div className="flex flex-col lg:flex-row gap-3 items-stretch justify-between">
               
@@ -1155,8 +1155,8 @@ export default function App() {
 
           </div>
 
-          {/* DYNAMIC SCENE VIEWS CONTAINER */}
-          <div className="flex-1 overflow-y-auto min-h-0 print:overflow-visible">
+            {/* DYNAMIC SCENE VIEWS CONTAINER */}
+            <div className="flex-1 min-h-0 print:overflow-visible">
             
             {filteredItems.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center space-y-3 max-w-md mx-auto my-8">
