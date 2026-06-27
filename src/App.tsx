@@ -10,7 +10,6 @@ import {
   Clock, 
   BookOpen, 
   User, 
-  Users,
   MapPin, 
   Layers, 
   Search, 
@@ -771,16 +770,16 @@ export default function App() {
   const uniqueClassroomsCount = new Set(filteredItems.map(i => i.classroom)).size;
 
   return (
-    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100 print:h-auto print:overflow-visible print:bg-white ${isDark ? 'dark' : ''}`}>
+    <div className={`h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans overflow-hidden text-slate-900 dark:text-slate-100 print:h-auto print:overflow-visible print:bg-white ${isDark ? 'dark' : ''}`}>
       
       {/* Sleek Top Banner */}
-      <div className="bg-slate-950 text-slate-300 text-center py-1 px-4 text-[11px] font-semibold tracking-wide flex items-center justify-center gap-2 print:hidden shrink-0 border-b border-slate-850">
+      <div className="bg-slate-950 text-slate-300 text-center py-2 px-4 text-xs font-semibold tracking-wide flex items-center justify-center gap-2 print:hidden shrink-0 border-b border-slate-850">
         <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
         <span>Made by <strong className="text-white">ABC Batch PGP 2026-28</strong></span>
       </div>
 
       {/* Sleek Header Navigation */}
-      <header className="h-12 shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between shadow-xs z-25 print:relative print:border-b-2 print:shadow-none">
+      <header className="h-16 shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between shadow-xs z-25 print:relative print:border-b-2 print:shadow-none">
         
         {/* Brand Logo & Title */}
         <div className="flex items-center gap-2 sm:gap-3">
@@ -831,7 +830,7 @@ export default function App() {
           <button
             onClick={handleExportCSV}
             disabled={filteredItems.length === 0}
-            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 cursor-pointer"
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 cursor-pointer"
             title="Download/Export timetable as CSV"
           >
             <Download className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
@@ -841,7 +840,7 @@ export default function App() {
           <button
             onClick={() => window.print()}
             disabled={filteredItems.length === 0}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-lg text-xs font-bold disabled:opacity-50 cursor-pointer"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-lg text-xs font-bold disabled:opacity-50 cursor-pointer"
             title="Print or Save PDF"
           >
             <Printer className="w-3.5 h-3.5" />
@@ -852,7 +851,7 @@ export default function App() {
 
           <button
             onClick={() => setIsDark(!isDark)}
-            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center border border-slate-200 dark:border-slate-700 cursor-pointer"
+            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center border border-slate-200 dark:border-slate-700 cursor-pointer"
             title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
             aria-label="Toggle dark mode"
           >
@@ -862,7 +861,7 @@ export default function App() {
       </header>
 
       {/* Main Layout containing Sidebar + Content Container */}
-      <main className="flex-1 flex print:overflow-visible print:block relative">
+      <main className="flex-1 flex overflow-hidden print:overflow-visible print:block relative">
         
         {/* Mobile Sidebar Backdrop */}
         {isSidebarOpen && (
@@ -873,7 +872,7 @@ export default function App() {
         )}
 
         {/* SLEEK SIDEBAR */}
-        <aside className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex flex-col gap-5 overflow-y-auto transition-transform duration-300 lg:translate-x-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:flex print:hidden shrink-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <aside className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex flex-col gap-5 overflow-y-auto transition-transform duration-300 lg:translate-x-0 lg:static lg:flex print:hidden shrink-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           
           {/* Mobile Close Button */}
           <div className="flex items-center justify-between lg:hidden border-b border-slate-100 dark:border-slate-800 pb-3 mb-1 shrink-0">
@@ -1012,7 +1011,7 @@ export default function App() {
         </aside>
 
         {/* TIMETABLE CONTENT VIEWPORT */}
-        <section className="flex-1 bg-slate-50 dark:bg-slate-950 flex flex-col p-3.5 sm:p-6 gap-4 sm:gap-6 print:p-0 print:overflow-visible print:block">
+        <section className="flex-1 bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden p-3.5 sm:p-6 gap-4 sm:gap-6 print:p-0 print:overflow-visible print:block">
           
           {/* Success/Error Alerts inside viewports */}
           {error && (
@@ -1032,9 +1031,11 @@ export default function App() {
             </div>
           )}
 
-          {/* Top Search and View Switcher Card */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2.5 shadow-2xs print:hidden">
-            <div className="flex flex-col lg:flex-row gap-2.5 items-stretch justify-between">
+          {/* Master Filters and View Mode Controls Row */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-2xs print:hidden">
+            
+            {/* Search & Tabs control */}
+            <div className="flex flex-col lg:flex-row gap-3 items-stretch justify-between">
               
               {/* Search Bar */}
               <div className="flex-1 relative">
@@ -1044,7 +1045,7 @@ export default function App() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by course code, full title, professor, or room..."
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 focus:border-indigo-500 rounded-lg pl-9 pr-8 py-1.5 text-xs placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden text-slate-900 dark:text-white"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 focus:border-indigo-500 rounded-lg pl-9 pr-8 py-2 text-xs placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden text-slate-900 dark:text-white"
                 />
                 {searchQuery && (
                   <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
@@ -1053,8 +1054,8 @@ export default function App() {
                 )}
               </div>
 
-              {/* View Switcher Tabs */}
-              <div className="flex p-0.5 bg-slate-100 dark:bg-slate-950 rounded-lg shrink-0 self-center lg:self-auto gap-0.5">
+              {/* View Switcher Tabs (Agenda vs Room Grid vs Interactive Calendar) */}
+              <div className="flex p-1 bg-slate-100 dark:bg-slate-950 rounded-lg shrink-0 self-center lg:self-auto gap-0.5">
                 <button
                   onClick={() => setViewMode('agenda')}
                   className={`flex items-center gap-1 px-3 py-1 text-xs font-bold rounded transition-all cursor-pointer ${
@@ -1090,62 +1091,17 @@ export default function App() {
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* STICKY HORIZONTAL SECTION PILLS (Becomes a 1-line sticky navigation bar on scroll!) */}
-          <div className="sticky top-0 z-30 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md py-2 -mx-3.5 sm:-mx-6 px-3.5 sm:px-6 border-b border-slate-200 dark:border-slate-800/85 shadow-2xs print:hidden">
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-[10px] font-extrabold text-slate-450 dark:text-slate-550 uppercase tracking-widest flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Choose Section</span>
-              </label>
-              {selectedSection !== 'all' && (
-                <button 
-                  onClick={() => setSelectedSection('all')}
-                  className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                >
-                  Clear Filter
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <button
-                onClick={() => setSelectedSection('all')}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer border ${
-                  selectedSection === 'all'
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-250 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                All Sections ({timetable.sections.length})
-              </button>
-              {timetable.sections.map(sec => (
-                <button
-                  key={sec}
-                  onClick={() => setSelectedSection(sec)}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer border ${
-                    selectedSection === sec
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-250 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  Section {sec}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Selector Dropdown Filters Card */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-2xs print:hidden">
-            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+            {/* Selector Filters Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3">
               
               {/* Date selection */}
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <label className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Select Date</label>
                 <select
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-lg px-2 py-1 text-xs font-semibold focus:outline-hidden focus:border-indigo-500"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-hidden focus:border-indigo-500"
                 >
                   <option value="all" className="dark:bg-slate-900 dark:text-white">All Dates ({timetable.dates.length})</option>
                   {timetable.dates.map(date => (
@@ -1155,12 +1111,12 @@ export default function App() {
               </div>
 
               {/* Course selection */}
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <label className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Select Course</label>
                 <select
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-lg px-2 py-1 text-xs font-semibold focus:outline-hidden focus:border-indigo-500"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-hidden focus:border-indigo-500"
                 >
                   <option value="all" className="dark:bg-slate-900 dark:text-white">All Courses ({timetable.courses.length})</option>
                   {timetable.courses.map(course => (
@@ -1170,12 +1126,12 @@ export default function App() {
               </div>
 
               {/* Classroom location */}
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <label className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Classroom</label>
                 <select
                   value={selectedClassroom}
                   onChange={(e) => setSelectedClassroom(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-lg px-2 py-1 text-xs font-semibold focus:outline-hidden focus:border-indigo-500"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-hidden focus:border-indigo-500"
                 >
                   <option value="all" className="dark:bg-slate-900 dark:text-white">All Classrooms ({timetable.classrooms.length})</option>
                   {timetable.classrooms.map(room => (
@@ -1189,17 +1145,18 @@ export default function App() {
                 <button
                   onClick={handleResetFilters}
                   disabled={selectedDate === 'all' && selectedCourse === 'all' && selectedClassroom === 'all' && selectedSection === 'all' && !searchQuery}
-                  className="w-full text-center py-1 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer"
+                  className="w-full text-center py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer"
                 >
                   Reset All Filters
                 </button>
               </div>
 
             </div>
+
           </div>
 
           {/* DYNAMIC SCENE VIEWS CONTAINER */}
-          <div className="w-full print:overflow-visible">
+          <div className="flex-1 overflow-y-auto min-h-0 print:overflow-visible">
             
             {filteredItems.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center space-y-3 max-w-md mx-auto my-8">
