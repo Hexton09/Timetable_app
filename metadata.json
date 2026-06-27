@@ -1,0 +1,6 @@
+{
+  "name": "Dynamic Timetable Viewer",
+  "description": "An interactive student timetable viewer that processes and filters schedule data from public Google Sheets CSVs using PapaParse.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
