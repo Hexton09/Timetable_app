@@ -775,7 +775,7 @@ export default function App() {
       {/* Sleek Top Banner */}
       <div className="bg-slate-950 text-slate-300 text-center py-2 px-4 text-xs font-semibold tracking-wide flex items-center justify-center gap-2 print:hidden shrink-0 border-b border-slate-850">
         <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-        <span>Made by <strong className="text-white">ABC Batch PGP 2026-28</strong></span>
+        <span>Made by <strong className="text-white">Rahul Singh Nagesh Batch PGP 2026-28</strong></span>
       </div>
 
       {/* Sleek Header Navigation */}
