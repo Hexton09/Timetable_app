@@ -10,6 +10,7 @@ import {
   Clock, 
   BookOpen, 
   User, 
+  Users,
   MapPin, 
   Layers, 
   Search, 
@@ -770,12 +771,12 @@ export default function App() {
   const uniqueClassroomsCount = new Set(filteredItems.map(i => i.classroom)).size;
 
   return (
-    <div className={`h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans overflow-hidden text-slate-900 dark:text-slate-100 print:h-auto print:overflow-visible print:bg-white ${isDark ? 'dark' : ''}`}>
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100 print:h-auto print:overflow-visible print:bg-white ${isDark ? 'dark' : ''}`}>
       
       {/* Sleek Top Banner */}
       <div className="bg-slate-950 text-slate-300 text-center py-2 px-4 text-xs font-semibold tracking-wide flex items-center justify-center gap-2 print:hidden shrink-0 border-b border-slate-850">
         <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-        <span>Made by <strong className="text-white">Rahul Singh Nagesh (PGP 2026-28)</strong></span>
+        <span>Made by <strong className="text-white">ABC Batch PGP 2026-28</strong></span>
       </div>
 
       {/* Sleek Header Navigation */}
@@ -861,7 +862,7 @@ export default function App() {
       </header>
 
       {/* Main Layout containing Sidebar + Content Container */}
-      <main className="flex-1 flex overflow-hidden print:overflow-visible print:block relative">
+      <main className="flex-1 flex print:overflow-visible print:block relative">
         
         {/* Mobile Sidebar Backdrop */}
         {isSidebarOpen && (
@@ -1011,7 +1012,7 @@ export default function App() {
         </aside>
 
         {/* TIMETABLE CONTENT VIEWPORT */}
-        <section className="flex-1 bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden p-3.5 sm:p-6 gap-4 sm:gap-6 print:p-0 print:overflow-visible print:block">
+        <section className="flex-1 bg-slate-50 dark:bg-slate-950 flex flex-col p-3.5 sm:p-6 gap-4 sm:gap-6 print:p-0 print:overflow-visible print:block">
           
           {/* Success/Error Alerts inside viewports */}
           {error && (
@@ -1092,6 +1093,49 @@ export default function App() {
               </div>
             </div>
 
+            {/* Horizontal Section Pills - Highly Accessible on Mobile! */}
+            <div className="space-y-2 border-t border-b border-slate-100 dark:border-slate-800/60 py-3">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Choose Section (Front & Center)</span>
+                </label>
+                {selectedSection !== 'all' && (
+                  <button 
+                    onClick={() => setSelectedSection('all')}
+                    className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                  >
+                    Clear Filter
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <button
+                  onClick={() => setSelectedSection('all')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer border ${
+                    selectedSection === 'all'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                      : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900'
+                  }`}
+                >
+                  All Sections ({timetable.sections.length})
+                </button>
+                {timetable.sections.map(sec => (
+                  <button
+                    key={sec}
+                    onClick={() => setSelectedSection(sec)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer border ${
+                      selectedSection === sec
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900'
+                    }`}
+                  >
+                    Section {sec}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Selector Filters Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3">
               
@@ -1156,7 +1200,7 @@ export default function App() {
           </div>
 
           {/* DYNAMIC SCENE VIEWS CONTAINER */}
-          <div className="flex-1 overflow-y-auto min-h-0 print:overflow-visible">
+          <div className="w-full print:overflow-visible">
             
             {filteredItems.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center space-y-3 max-w-md mx-auto my-8">
