@@ -75,10 +75,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </div>
           <div>
             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider block">Today's Academic Reference</span>
-            <span className="text-sm font-bold text-slate-900 dark:text-white block mt-0.5">Saturday, June 27, 2026</span>
+            <span className="text-sm font-bold text-slate-900 dark:text-white block mt-0.5">
+              {todayDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </span>
             <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 flex items-center gap-1 mt-0.5">
               <span className="w-1.5 h-1.5 bg-indigo-500 animate-ping rounded-full inline-block"></span>
-              <span>Weekend / Prep Day (No Classes)</span>
+              <span>Live Schedule Tracker</span>
             </span>
           </div>
         </div>
@@ -189,7 +191,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] font-bold text-slate-500 dark:text-slate-450 border-t border-b border-slate-100 dark:border-slate-850 py-2 shrink-0">
             <span className="flex items-center gap-1">
               <span className="w-2.5 h-2.5 rounded bg-indigo-600 inline-block"></span>
-              <span>Today (June 27)</span>
+              <span>Today ({todayDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})</span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-2.5 h-2.5 rounded border border-amber-400 bg-amber-50 dark:bg-amber-950/30 inline-block"></span>
@@ -236,7 +238,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               const regularClasses = dayItems.filter(item => item.abbr !== 'HOLIDAY' && item.abbr !== 'BLOCKED');
 
               // Determine Date states
-              const isToday = calendarYear === 2026 && calendarMonth === 5 && d === 27;
+              const isToday = calendarYear === todayDateObj.getFullYear() && calendarMonth === todayDateObj.getMonth() && d === todayDateObj.getDate();
               const isNextActive = nextActiveDate && matchingDateStr === nextActiveDate;
               const isPast = new Date(calendarYear, calendarMonth, d).getTime() < todayDateObj.getTime();
               const isInspected = matchingDateStr && activeInspectedDate === matchingDateStr;

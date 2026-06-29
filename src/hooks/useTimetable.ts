@@ -176,8 +176,8 @@ export function useTimetable() {
     return groups;
   }, [filteredItems]);
 
-  // Anchor date for academic timeline tracker: June 27, 2026 (Saturday)
-  const todayDateObj = useMemo(() => new Date(2026, 5, 27), []);
+  // Anchor date for academic timeline tracker: uses the current live date
+  const todayDateObj = useMemo(() => new Date(), []);
 
   const getDetailedDateStatus = useCallback((dateStr: string) => {
     const dateObj = parseDateString(dateStr);
