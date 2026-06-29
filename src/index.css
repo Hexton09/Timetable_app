@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
 
 @variant dark (&:where(.dark, .dark *));
 
@@ -8,3 +8,24 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+
+@layer utilities {
+  .bg-cancelled-stripes {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(244, 63, 94, 0.03),
+      rgba(244, 63, 94, 0.03) 10px,
+      transparent 10px,
+      transparent 20px
+    );
+  }
+  .dark .bg-cancelled-stripes {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(244, 63, 94, 0.05),
+      rgba(244, 63, 94, 0.05) 10px,
+      transparent 10px,
+      transparent 20px
+    );
+  }
+}

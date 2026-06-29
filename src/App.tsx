@@ -253,6 +253,23 @@ function formatDateString(dateStr: string): string {
   }
 }
 
+// Custom Helper to normalize time slot strings (e.g. converting dot separator to colon, matching layout spacing)
+function normalizeTime(timeStr: string): string {
+  if (!timeStr) return '';
+  let normalized = timeStr.trim();
+  
+  // Replace dot separating hours and minutes, e.g. "09.15" -> "09:15"
+  normalized = normalized.replace(/(\d{1,2})\.(\d{2})/g, '$1:$2');
+  
+  // Normalize dashes/hyphens: replace any type of dash or spaces around it with a standard " - "
+  normalized = normalized.replace(/\s*[\-\u2013\u2014]\s*/g, ' - ');
+  
+  // Pad single digit hours with leading zeros for sorting and consistency, e.g. "9:15" -> "09:15"
+  normalized = normalized.replace(/\b(\d):(\d{2})\b/g, '0$1:$2');
+  
+  return normalized;
+}
+
 export default function App() {
   // Master timetable state
   const [timetable, setTimetable] = useState<TimetableData>({
@@ -408,7 +425,8 @@ export default function App() {
       const timeKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'time') || 'Time';
 
       const date = (row[dateKey] || '').trim();
-      const time = (row[timeKey] || '').trim();
+      const rawTime = (row[timeKey] || '').trim();
+      const time = normalizeTime(rawTime);
 
       if (!date || !time) return;
 
@@ -424,10 +442,16 @@ export default function App() {
         const roomName = roomCol.trim();
         classroomsSet.add(roomName);
 
-        const cellVal = (row[roomCol] || '').trim();
+        let cellVal = (row[roomCol] || '').trim();
         // Ignore empty cells and LUNCH BREAK
         if (!cellVal || cellVal === "" || cellVal.toUpperCase() === "LUNCH BREAK") {
           return;
+        }
+
+        let isCancelled = false;
+        if (cellVal.startsWith('[CANCELLED] ')) {
+          isCancelled = true;
+          cellVal = cellVal.substring('[CANCELLED] '.length).trim();
         }
 
         const upperVal = cellVal.toUpperCase();
@@ -502,7 +526,8 @@ export default function App() {
           abbr,
           section,
           courseName,
-          professor
+          professor,
+          isCancelled
         });
       });
     });
@@ -528,8 +553,8 @@ export default function App() {
       let fetchedFromBackend = false;
 
       try {
-        // Attempt to load from secure backend API (proxying env variables)
-        const response = await fetch('/api/timetable');
+        // Attempt to load from secure backend API (proxying env variables) with cache busting
+        const response = await fetch('/api/timetable?t=' + Date.now(), { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           if (data.scheduleCsv && data.courseCsv) {
@@ -575,10 +600,18 @@ export default function App() {
     }
   };
 
-  // Trigger load on mounting
+  // Trigger load on mounting and auto-sync when window regains focus
   useEffect(() => {
     loadTimetableData();
-  }, []);
+
+    const handleFocus = () => {
+      console.log("Window focused, live syncing timetable...");
+      loadTimetableData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filtered timetable items based on selectors & query search
   const filteredItems = useMemo(() => {
@@ -621,7 +654,14 @@ export default function App() {
       if (!groups[item.date]) {
         groups[item.date] = [];
       }
-      groups[item.date].push(item);
+      const isSpecial = item.abbr === 'BLOCKED' || item.abbr === 'HOLIDAY';
+      if (isSpecial) {
+        if (!groups[item.date].some(g => g.time === item.time && g.abbr === item.abbr)) {
+          groups[item.date].push(item);
+        }
+      } else {
+        groups[item.date].push(item);
+      }
     });
 
     Object.keys(groups).forEach(date => {
@@ -700,6 +740,23 @@ export default function App() {
     
     return upcoming || sortedDates[sortedDates.length - 1];
   }, [timetable.dates, todayDateObj]);
+
+  // Automatically align calendar view to the most relevant loaded date
+  useEffect(() => {
+    if (nextActiveDate) {
+      const parsed = parseDateString(nextActiveDate);
+      if (!isNaN(parsed.getTime())) {
+        setCalendarMonth(parsed.getMonth());
+        setCalendarYear(parsed.getFullYear());
+      }
+    } else if (timetable.dates.length > 0) {
+      const parsed = parseDateString(timetable.dates[0]);
+      if (!isNaN(parsed.getTime())) {
+        setCalendarMonth(parsed.getMonth());
+        setCalendarYear(parsed.getFullYear());
+      }
+    }
+  }, [nextActiveDate, timetable.dates]);
 
   const availableMonths = useMemo(() => {
     const months: { monthNum: number; year: number; label: string }[] = [];
@@ -806,21 +863,30 @@ export default function App() {
         {/* Viewing Section Selector & Live update status (Sleek Theme pattern) */}
 {/* Viewing Section Selector & Live update status (Sleek Theme pattern) */}
         <div className="flex items-center gap-2 sm:gap-3 print:hidden">
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-2.5 py-1.5 border border-slate-200 dark:border-slate-700">
-            <label htmlFor="sectionSelect" className="hidden sm:block text-[9px] font-bold text-slate-500 dark:text-slate-450 uppercase tracking-wider mr-1.5">
-              Section:
-            </label>
-            <select 
-              id="sectionSelect"
-              value={selectedSection}
-              onChange={(e) => setSelectedSection(e.target.value)}
-              className="bg-transparent border-none text-xs font-semibold focus:outline-hidden cursor-pointer py-0 text-slate-800 dark:text-slate-200"
+          <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 max-w-[150px] sm:max-w-md overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <button
+              onClick={() => setSelectedSection('all')}
+              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+                selectedSection === 'all' 
+                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' 
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
             >
-              <option value="all">All ({timetable.sections.length})</option>
-              {timetable.sections.map(sec => (
-                <option key={sec} value={sec} className="dark:bg-slate-900 dark:text-white">Sec {sec}</option>
-              ))}
-            </select>
+              All
+            </button>
+            {timetable.sections.map(sec => (
+              <button
+                key={sec}
+                onClick={() => setSelectedSection(sec)}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+                  selectedSection === sec 
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                {sec}
+              </button>
+            ))}
           </div>
 
           <div className="hidden lg:flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-900/50">
@@ -886,25 +952,7 @@ export default function App() {
             </button>
           </div>
 
-          {/* Mobile Viewing Section Select */}
-          <div className="sm:hidden space-y-1">
-            <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-              Viewing Section
-            </h3>
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-2 border border-slate-200 dark:border-slate-700">
-              <select 
-                value={selectedSection}
-                onChange={(e) => setSelectedSection(e.target.value)}
-                className="w-full bg-transparent border-none text-xs font-semibold focus:outline-hidden cursor-pointer text-slate-800 dark:text-slate-200"
-              >
-                <option value="all">All Sections ({timetable.sections.length})</option>
-                {timetable.sections.map(sec => (
-                  <option key={sec} value={sec} className="dark:bg-slate-900 dark:text-white">Section {sec}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          
+
           {/* Current Status Widget */}
           <div>
             <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1">
@@ -1031,6 +1079,38 @@ export default function App() {
               <p className="flex-1 font-medium">{successMsg}</p>
             </div>
           )}
+
+          {/* Mobile-only Section Selector (moved down to main page view) */}
+          <div className="sm:hidden shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs print:hidden">
+            <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2.5">
+              Viewing Section
+            </h3>
+            <div className="flex overflow-x-auto gap-1.5 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <button
+                onClick={() => setSelectedSection('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer border shrink-0 ${
+                  selectedSection === 'all'
+                    ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+                    : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                All
+              </button>
+              {timetable.sections.map(sec => (
+                <button
+                  key={sec}
+                  onClick={() => setSelectedSection(sec)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer border shrink-0 ${
+                    selectedSection === sec
+                      ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+                      : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  Sec {sec}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Master Filters and View Mode Controls Row */}
             <div className="shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-2xs print:hidden">
@@ -1196,13 +1276,24 @@ export default function App() {
                         {/* List cards (matches the style criteria for Sleek Interface theme cards) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {groupedAgenda[dateStr].map((item) => {
-                            const colors = getCourseColor(item.abbr);
+                            let colors = getCourseColor(item.abbr);
+                            if (item.isCancelled) {
+                              colors = { bg: 'bg-rose-50/90 dark:bg-rose-950/40 bg-cancelled-stripes', borderL: 'border-rose-500', border: 'border-rose-200 dark:border-rose-900/60', textDark: 'text-rose-900 dark:text-rose-200', badge: 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 shadow-inner', text: 'text-rose-800 dark:text-rose-300' };
+                            }
+                            const textOpacity = item.isCancelled ? 'opacity-60 grayscale-[50%]' : '';
+                            
                             return (
                               <div
                                 key={item.id}
-                                className={`${colors.bg} border-l-4 ${colors.borderL} border ${colors.border} rounded-lg p-3.5 shadow-xs transition-all hover:shadow-md space-y-2.5`}
+                                className={`${colors.bg} border-l-4 ${colors.borderL} border ${colors.border} rounded-lg p-3.5 shadow-xs transition-all hover:shadow-md space-y-2.5 relative overflow-hidden`}
                               >
-                                <div>
+                                {item.isCancelled && (
+                                  <div className="absolute top-0 right-0 bg-gradient-to-bl from-rose-500 to-rose-600 text-white text-[9px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-widest shadow-sm flex items-center gap-1.5 z-10">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse"></span>
+                                    CANCELLED
+                                  </div>
+                                )}
+                                <div className={textOpacity}>
                                   <div className="flex items-center justify-between gap-2">
                                     <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 font-mono">
                                       {item.time}
@@ -1211,12 +1302,12 @@ export default function App() {
                                       {item.abbr === 'BLOCKED' ? 'BLOCKED' : `${item.abbr}-${item.section}`}
                                     </span>
                                   </div>
-                                  <h4 className={`text-xs font-bold line-clamp-2 mt-1 leading-snug ${colors.textDark || 'text-slate-900 dark:text-white'}`}>
+                                  <h4 className={`text-xs font-bold line-clamp-2 mt-1 leading-snug ${colors.textDark || 'text-slate-900 dark:text-white'} ${item.isCancelled ? 'line-through decoration-rose-400/50 dark:decoration-rose-600/50' : ''}`}>
                                     {item.courseName}
                                   </h4>
                                 </div>
 
-                                <div className={`pt-2 border-t ${colors.border} flex flex-col gap-1 text-[10px] text-slate-600 dark:text-slate-300 font-medium`}>
+                                <div className={`pt-2 border-t ${colors.border} flex flex-col gap-1 text-[10px] text-slate-600 dark:text-slate-300 font-medium ${textOpacity}`}>
                                   <div className="flex items-center gap-1.5">
                                     <User className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
                                     <span className="truncate italic">{item.professor}</span>
@@ -1304,36 +1395,52 @@ export default function App() {
                                         selectedClassroom === room ? 'bg-indigo-50/15 dark:bg-indigo-950/10' : ''
                                       }`}
                                     >
-                                      {session ? (
-                                        <div 
-                                          className={`rounded-lg p-2.5 text-left border transition-all ${
-                                            matchesFilters 
-                                              ? `${colors?.bg} border-l-4 ${colors?.borderL} border ${colors?.border} text-slate-900 dark:text-slate-100` 
-                                              : 'bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-600 border-slate-200 dark:border-slate-805 opacity-30'
-                                          }`}
-                                        >
-                                          <div className="flex items-center justify-between gap-1">
-                                            <span className={`text-[9px] font-extrabold font-mono tracking-wider px-1 rounded ${
-                                              matchesFilters ? colors?.badge : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                                            }`}>
-                                              {session.abbr}
-                                            </span>
-                                            {session.abbr !== 'BLOCKED' && (
-                                              <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-550 font-mono">
-                                                Sect. {session.section}
-                                              </span>
+                                      {session ? (() => {
+                                        let colors = matchesFilters ? getCourseColor(session.abbr) : null;
+                                        if (session.isCancelled && matchesFilters) {
+                                          colors = { bg: 'bg-rose-50/90 dark:bg-rose-950/40 bg-cancelled-stripes', borderL: 'border-rose-500', border: 'border-rose-200 dark:border-rose-900/60', textDark: 'text-rose-900 dark:text-rose-200', badge: 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 shadow-inner', text: 'text-rose-800 dark:text-rose-300' } as any;
+                                        }
+                                        const textOpacity = session.isCancelled ? 'opacity-60 grayscale-[50%]' : '';
+                                        
+                                        return (
+                                          <div 
+                                            className={`relative overflow-hidden rounded-lg p-2.5 text-left border transition-all ${
+                                              matchesFilters 
+                                                ? `${colors?.bg} border-l-4 ${colors?.borderL} border ${colors?.border} text-slate-900 dark:text-slate-100` 
+                                                : 'bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-600 border-slate-200 dark:border-slate-805 opacity-30'
+                                            }`}
+                                          >
+                                            {session.isCancelled && matchesFilters && (
+                                              <div className="absolute top-0 right-0 bg-gradient-to-bl from-rose-500 to-rose-600 text-white text-[7.5px] font-black px-1.5 py-0.5 rounded-bl-lg uppercase tracking-widest shadow-sm flex items-center gap-1 z-10">
+                                                <span className="w-1 h-1 rounded-full bg-white/80 animate-pulse"></span>
+                                                CXL
+                                              </div>
                                             )}
+                                            <div className={textOpacity}>
+                                              <div className="flex items-center justify-between gap-1">
+                                                <span className={`text-[9px] font-extrabold font-mono tracking-wider px-1 rounded ${
+                                                  matchesFilters ? colors?.badge : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                                                }`}>
+                                                  {session.abbr}
+                                                </span>
+                                                {session.abbr !== 'BLOCKED' && (
+                                                  <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-550 font-mono">
+                                                    Sect. {session.section}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <h5 className={`font-bold text-[11px] mt-1 leading-snug line-clamp-1 ${
+                                                matchesFilters ? colors?.textDark || 'text-slate-900 dark:text-slate-150' : 'text-slate-400 dark:text-slate-600'
+                                              } ${session.isCancelled ? 'line-through decoration-rose-400/50 dark:decoration-rose-600/50' : ''}`}>
+                                                {session.courseName}
+                                              </h5>
+                                              <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+                                                👤 {session.professor}
+                                              </p>
+                                            </div>
                                           </div>
-                                          <h5 className={`font-bold text-[11px] mt-1 leading-snug line-clamp-1 ${
-                                            matchesFilters ? 'text-slate-900 dark:text-slate-150' : 'text-slate-400 dark:text-slate-600'
-                                          }`}>
-                                            {session.courseName}
-                                          </h5>
-                                          <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 truncate">
-                                            👤 {session.professor}
-                                          </p>
-                                        </div>
-                                      ) : (
+                                        );
+                                      })() : (
                                         <span className="text-[9px] text-slate-300 dark:text-slate-700 font-mono">-- empty --</span>
                                       )}
                                     </td>
@@ -1358,7 +1465,12 @@ export default function App() {
 
                   // Find the selected inspected date's timetable items
                   const activeInspectedDate = inspectedDate || nextActiveDate || '';
-                  const inspectedItems = timetable.items.filter(item => item.date === activeInspectedDate);
+                  const inspectedItemsRaw = timetable.items.filter(item => item.date === activeInspectedDate);
+                  const inspectedItems = inspectedItemsRaw.filter((item, index, self) => {
+                    const isSpecial = item.abbr === 'BLOCKED' || item.abbr === 'HOLIDAY';
+                    if (!isSpecial) return true;
+                    return index === self.findIndex(g => g.time === item.time && g.abbr === item.abbr);
+                  });
                   const statusInfo = activeInspectedDate ? getDetailedDateStatus(activeInspectedDate) : null;
 
                   // List of all holidays and blocked slots in the dataset to show in a legend / special list
@@ -1530,7 +1642,7 @@ export default function App() {
                           </div>
 
                           {/* Grid Days Tiles */}
-                          <div className="grid grid-cols-7 gap-1.5 flex-1">
+                          <div className="grid grid-cols-7 gap-1.5">
                             {/* Empty spacing padding cells */}
                             {Array.from({ length: firstDayIndex }).map((_, idx) => (
                               <div 
@@ -1590,10 +1702,13 @@ export default function App() {
                               return (
                                 <button
                                   key={`day-${d}`}
-                                  disabled={!matchingDateStr && !isToday}
                                   onClick={() => {
                                     if (matchingDateStr) {
                                       setInspectedDate(matchingDateStr);
+                                    } else {
+                                      // Construct YYYY-MM-DD string
+                                      const constructedDate = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                      setInspectedDate(constructedDate);
                                     }
                                   }}
                                   className={`aspect-square p-1.5 sm:p-2 rounded-xl flex flex-col justify-between items-stretch transition-all relative ${tileStyles} ${borderAccent} ${indicatorRing}`}
@@ -1680,7 +1795,7 @@ export default function App() {
                           </div>
 
                           {/* Render Detailed Day schedule or empty free-day message */}
-                          <div className="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[350px]">
+                          <div className="flex-1 overflow-y-auto space-y-3 pr-1">
                             {inspectedItems.length === 0 ? (
                               <div className="text-center py-10 px-4 bg-slate-50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-850 rounded-xl space-y-2">
                                 <div className="text-slate-400 dark:text-slate-550 flex justify-center text-2xl">🌴</div>
@@ -1693,12 +1808,16 @@ export default function App() {
                               inspectedItems.map(session => {
                                 const isBlocked = session.abbr === 'BLOCKED';
                                 const isHoliday = session.abbr === 'HOLIDAY';
-                                const colors = getCourseColor(session.abbr);
+                                let colors = getCourseColor(session.abbr);
+                                if (session.isCancelled) {
+                                  colors = { bg: 'bg-rose-50/90 dark:bg-rose-950/40 bg-cancelled-stripes', borderL: 'border-rose-500', border: 'border-rose-200 dark:border-rose-900/60', textDark: 'text-rose-900 dark:text-rose-200', badge: 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 shadow-inner', text: 'text-rose-800 dark:text-rose-300' } as any;
+                                }
+                                const textOpacity = session.isCancelled ? 'opacity-60 grayscale-[50%]' : '';
 
                                 return (
                                   <div 
                                     key={session.id}
-                                    className={`p-3 rounded-xl border shadow-3xs flex flex-col gap-2 relative transition-all ${
+                                    className={`p-3 rounded-xl border shadow-3xs flex flex-col gap-2 relative overflow-hidden transition-all ${
                                       isBlocked 
                                         ? 'bg-red-50/80 dark:bg-red-950/30 border-red-200 dark:border-red-900/40 border-l-4 border-l-red-600' 
                                         : isHoliday 
@@ -1706,32 +1825,40 @@ export default function App() {
                                           : `${colors.bg} ${colors.border} border-l-4 ${colors.borderL}`
                                     }`}
                                   >
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className="text-[10px] font-bold text-slate-550 dark:text-slate-400 font-mono flex items-center gap-1">
-                                        <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-550 shrink-0" />
-                                        <span>{session.time}</span>
-                                      </span>
+                                    {session.isCancelled && (
+                                      <div className="absolute top-0 right-0 bg-gradient-to-bl from-rose-500 to-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-bl-xl uppercase tracking-widest shadow-sm flex items-center gap-1.5 z-10">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse"></span>
+                                        CANCELLED
+                                      </div>
+                                    )}
+                                    <div className={textOpacity}>
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="text-[10px] font-bold text-slate-550 dark:text-slate-400 font-mono flex items-center gap-1">
+                                          <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-550 shrink-0" />
+                                          <span>{session.time}</span>
+                                        </span>
 
-                                      <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold font-mono tracking-wider shrink-0 uppercase ${colors.badge}`}>
-                                        {isBlocked ? 'Blocked Slot' : isHoliday ? 'Academic Holiday' : `${session.abbr}-${session.section}`}
-                                      </span>
-                                    </div>
+                                        <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold font-mono tracking-wider shrink-0 uppercase ${colors.badge}`}>
+                                          {isBlocked ? 'Blocked Slot' : isHoliday ? 'Academic Holiday' : `${session.abbr}-${session.section}`}
+                                        </span>
+                                      </div>
 
-                                    <div>
-                                      <h5 className="text-xs font-bold text-slate-855 dark:text-slate-100 leading-snug">
-                                        {session.courseName}
-                                      </h5>
-                                    </div>
+                                      <div>
+                                        <h5 className={`text-xs font-bold leading-snug mt-1.5 ${colors.textDark || 'text-slate-855 dark:text-slate-100'} ${session.isCancelled ? 'line-through decoration-rose-400/50 dark:decoration-rose-600/50' : ''}`}>
+                                          {session.courseName}
+                                        </h5>
+                                      </div>
 
-                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-850 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-450 font-medium">
-                                      <span className="flex items-center gap-1 min-w-0 max-w-[50%]">
-                                        <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                        <span className="truncate italic">{session.professor}</span>
-                                      </span>
-                                      <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300 font-mono">
-                                        <MapPin className="w-3.5 h-3.5 text-indigo-550 shrink-0" />
-                                        <span className="font-bold">{session.classroom}</span>
-                                      </span>
+                                      <div className={`pt-2 mt-2 border-t flex items-center justify-between text-[10px] font-medium ${colors.border} ${colors.textDark ? 'opacity-80' : 'text-slate-500 dark:text-slate-450'}`}>
+                                        <span className="flex items-center gap-1 min-w-0 max-w-[50%]">
+                                          <User className="w-3.5 h-3.5 shrink-0" />
+                                          <span className="truncate italic">{session.professor}</span>
+                                        </span>
+                                        <span className="flex items-center gap-1 font-mono">
+                                          <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                          <span className="font-bold">{session.classroom}</span>
+                                        </span>
+                                      </div>
                                     </div>
                                   </div>
                                 );

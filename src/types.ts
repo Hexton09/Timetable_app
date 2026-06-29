@@ -30,6 +30,7 @@ export interface TimetableItem {
   section: string;
   courseName: string;
   professor: string;
+  isCancelled?: boolean;
 }
 
 export interface TimetableData {
