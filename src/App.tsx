@@ -376,6 +376,7 @@ export default function App() {
                     inspectedDate={inspectedDate}
                     setInspectedDate={setInspectedDate}
                     timetable={timetable}
+                    filteredItems={filteredItems}
                     nextActiveDate={nextActiveDate}
                     getDetailedDateStatus={getDetailedDateStatus}
                     todayDateObj={todayDateObj}

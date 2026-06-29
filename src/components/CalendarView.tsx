@@ -11,6 +11,7 @@ interface CalendarViewProps {
   inspectedDate: string | null;
   setInspectedDate: (date: string | null) => void;
   timetable: TimetableData;
+  filteredItems: TimetableItem[];
   nextActiveDate: string | null;
   getDetailedDateStatus: (dateStr: string) => { label: string; color: string; badge: string; };
   todayDateObj: Date;
@@ -26,6 +27,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   inspectedDate,
   setInspectedDate,
   timetable,
+  filteredItems,
   nextActiveDate,
   getDetailedDateStatus,
   todayDateObj,
@@ -40,7 +42,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   // Find the selected inspected date's timetable items
   const activeInspectedDate = inspectedDate || nextActiveDate || '';
-  const inspectedItemsRaw = timetable.items.filter(item => item.date === activeInspectedDate);
+  const inspectedItemsRaw = filteredItems.filter(item => item.date === activeInspectedDate);
   const inspectedItems = inspectedItemsRaw.filter((item, index, self) => {
     const isSpecial = item.abbr === 'BLOCKED' || item.abbr === 'HOLIDAY';
     if (!isSpecial) return true;
@@ -49,7 +51,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const statusInfo = activeInspectedDate ? getDetailedDateStatus(activeInspectedDate) : null;
 
   // List of all holidays and blocked slots in the dataset to show in a legend / special list
-  const specialDaysList = timetable.items.reduce((acc: { date: string; type: 'HOLIDAY' | 'BLOCKED'; name: string }[], item) => {
+  const specialDaysList = filteredItems.reduce((acc: { date: string; type: 'HOLIDAY' | 'BLOCKED'; name: string }[], item) => {
     if (item.abbr === 'HOLIDAY' || item.abbr === 'BLOCKED') {
       if (!acc.some(x => x.date === item.date && x.type === item.abbr)) {
         acc.push({
@@ -95,7 +97,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             {nextActiveDate ? (
               <>
                 <span className="text-sm font-bold text-slate-900 dark:text-white truncate block mt-0.5">{formatDateString(nextActiveDate)}</span>
-                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 mt-0.5 font-mono block">Starts Monday • {timetable.items.filter(i => i.date === nextActiveDate).length} lectures scheduled</span>
+                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 mt-0.5 font-mono block">Starts Monday • {filteredItems.filter(i => i.date === nextActiveDate).length} lectures scheduled</span>
               </>
             ) : (
               <span className="text-xs text-slate-500 dark:text-slate-400 italic block mt-0.5">No upcoming dates found</span>
@@ -232,7 +234,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             {Array.from({ length: daysInMonth }).map((_, idx) => {
               const d = idx + 1;
               const matchingDateStr = dateToDatesMap[`${calendarYear}-${calendarMonth}-${d}`];
-              const dayItems = matchingDateStr ? timetable.items.filter(item => item.date === matchingDateStr) : [];
+              const dayItems = matchingDateStr ? filteredItems.filter(item => item.date === matchingDateStr) : [];
               const holidays = dayItems.filter(item => item.abbr === 'HOLIDAY');
               const blocked = dayItems.filter(item => item.abbr === 'BLOCKED');
               const regularClasses = dayItems.filter(item => item.abbr !== 'HOLIDAY' && item.abbr !== 'BLOCKED');
