@@ -5,13 +5,31 @@ import { getCourseColor, formatDateString, sortDateStrings } from '../utils';
 
 interface AgendaViewProps {
   groupedAgenda: { [date: string]: TimetableItem[] };
+  todayDateObj: Date;
 }
 
-export const AgendaView: React.FC<AgendaViewProps> = ({ groupedAgenda }) => {
+export const AgendaView: React.FC<AgendaViewProps> = ({ groupedAgenda, todayDateObj }) => {
+  const tZero = new Date(todayDateObj.getFullYear(), todayDateObj.getMonth(), todayDateObj.getDate()).getTime();
+  
+  // Only include dates that are today or in the future
+  const upcomingDates = sortDateStrings(Object.keys(groupedAgenda)).filter(dateStr => {
+    const p = new Date(dateStr);
+    return new Date(p.getFullYear(), p.getMonth(), p.getDate()).getTime() >= tZero;
+  });
+
   return (
     <div className="space-y-6 print:space-y-4">
-      {sortDateStrings(Object.keys(groupedAgenda)).map(dateStr => (
-        <div key={dateStr} className="space-y-2.5">
+      {upcomingDates.length === 0 ? (
+        <div className="text-center py-10 px-4 bg-slate-50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-850 rounded-xl">
+          <div className="text-slate-400 dark:text-slate-550 flex justify-center text-3xl mb-3">☕</div>
+          <h5 className="text-sm font-bold text-slate-800 dark:text-slate-200">No Upcoming Classes</h5>
+          <p className="text-xs text-slate-500 dark:text-slate-450 mt-1">
+            You don't have any future classes scheduled.
+          </p>
+        </div>
+      ) : (
+        upcomingDates.map(dateStr => (
+          <div key={dateStr} className="space-y-2.5">
           
           {/* Day / Date Header banner */}
           <div className="bg-slate-100/80 dark:bg-slate-900/40 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-between">
@@ -71,7 +89,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ groupedAgenda }) => {
             })}
           </div>
         </div>
-      ))}
+      )))}
     </div>
   );
 };

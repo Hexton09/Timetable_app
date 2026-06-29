@@ -288,6 +288,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   }}
                   className={`aspect-square p-1.5 sm:p-2 rounded-xl flex flex-col justify-between items-stretch transition-all relative ${tileStyles} ${borderAccent} ${indicatorRing}`}
                 >
+                  {isToday && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-xl animate-bounce z-20 drop-shadow-md pointer-events-none" title="Current Date Pointer">
+                      📍
+                    </div>
+                  )}
+
                   {/* Day Number + Tiny category status label */}
                   <div className="flex justify-between items-center w-full">
                     <span className="text-[11px] sm:text-xs font-bold font-mono">

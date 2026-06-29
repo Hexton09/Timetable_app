@@ -350,7 +350,7 @@ export default function App() {
               <>
                 {/* AGENDA MODE */}
                 {viewMode === 'agenda' && (
-                  <AgendaView groupedAgenda={groupedAgenda} />
+                  <AgendaView groupedAgenda={groupedAgenda} todayDateObj={todayDateObj} />
                 )}
 
                 {/* OCCUPANCY GRID MATRIX */}
